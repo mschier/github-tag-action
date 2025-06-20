@@ -14,6 +14,11 @@ export function setBranch(branch: string) {
   process.env['GITHUB_REF'] = `refs/heads/${branch}`;
 }
 
+export function setPrBranch(branch: string) {
+  process.env['GITHUB_REF'] = `refs/pull/1/merge`;
+  process.env['GITHUB_HEAD_REF'] = branch;
+}
+
 export function setCommitSha(sha: string) {
   process.env['GITHUB_SHA'] = sha;
 }

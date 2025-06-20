@@ -53,6 +53,10 @@ inputs:
     description: "Boolean to create an annotated tag rather than lightweight."
     required: false
     default: "false"
+  handle_pr_as_branch:
+    description: "Boolean to handle PR triggers as branches when 'true'. Effectively GITHUB_HEAD_REF will be used instead of GITHUB_REF."
+    required: false
+    default: "false"
   fetch_all_tags:
     description: "Boolean to fetch all tags for a repo (if false, only the last 100 will be fetched)."
     required: false

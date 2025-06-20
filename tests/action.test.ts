@@ -7,6 +7,7 @@ import {
   setBranch,
   setCommitSha,
   setInput,
+  setPrBranch,
   setRepository,
 } from './helper.test';
 
@@ -870,6 +871,203 @@ describe('github-tag-action', () => {
        */
       expect(mockSetOutput).toHaveBeenCalledWith('new_version', '2.0.0');
       expect(mockCreateTag).not.toBeCalled();
+      expect(mockSetFailed).not.toBeCalled();
+    });
+  });
+
+  describe('pull requests', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      setPrBranch('source-branch');
+    });
+
+    it('does only output tag for pull request without handle_pr_as_branch set', async () => {
+      /*
+       * Given
+       */
+      setInput('handle_pr_as_branch', 'false');
+      const commits = [{ message: 'fix: this is my first fix', hash: null }];
+      jest
+        .spyOn(utils, 'getCommits')
+        .mockImplementation(async (sha) => commits);
+
+      const validTags = [
+        {
+          name: 'v1.2.3',
+          commit: { sha: '012345', url: '' },
+          zipball_url: '',
+          tarball_url: 'string',
+          node_id: 'string',
+        },
+      ];
+      jest
+        .spyOn(utils, 'getValidTags')
+        .mockImplementation(async () => validTags);
+
+      /*
+       * When
+       */
+      await action();
+
+      /*
+       * Then
+       */
+      expect(mockSetOutput).toHaveBeenCalledWith('new_version', '1.2.4');
+      expect(mockCreateTag).not.toBeCalled();
+      expect(mockSetFailed).not.toBeCalled();
+    });
+
+    it('does only output tag for pull request from release branch without handle_pr_as_branch set', async () => {
+      /*
+       * Given
+       */
+      setInput('release_branches', 'source-branch');
+      setInput('handle_pr_as_branch', 'false');
+      const commits = [{ message: 'fix: this is my first fix', hash: null }];
+      jest
+        .spyOn(utils, 'getCommits')
+        .mockImplementation(async (sha) => commits);
+
+      const validTags = [
+        {
+          name: 'v1.2.3',
+          commit: { sha: '012345', url: '' },
+          zipball_url: '',
+          tarball_url: 'string',
+          node_id: 'string',
+        },
+      ];
+      jest
+        .spyOn(utils, 'getValidTags')
+        .mockImplementation(async () => validTags);
+
+      /*
+       * When
+       */
+      await action();
+
+      /*
+       * Then
+       */
+      expect(mockSetOutput).toHaveBeenCalledWith('new_version', '1.2.4');
+      expect(mockCreateTag).not.toBeCalled();
+      expect(mockSetFailed).not.toBeCalled();
+    });
+
+    it('does only output tag for pull request from prerelease branch without handle_pr_as_branch set', async () => {
+      /*
+       * Given
+       */
+      setInput('pre_release_branches', 'source-branch');
+      setInput('handle_pr_as_branch', 'false');
+      const commits = [{ message: 'fix: this is my first fix', hash: null }];
+      jest
+        .spyOn(utils, 'getCommits')
+        .mockImplementation(async (sha) => commits);
+
+      const validTags = [
+        {
+          name: 'v1.2.3',
+          commit: { sha: '012345', url: '' },
+          zipball_url: '',
+          tarball_url: 'string',
+          node_id: 'string',
+        },
+      ];
+      jest
+        .spyOn(utils, 'getValidTags')
+        .mockImplementation(async () => validTags);
+
+      /*
+       * When
+       */
+      await action();
+
+      /*
+       * Then
+       */
+      expect(mockSetOutput).toHaveBeenCalledWith('new_version', '1.2.4');
+      expect(mockCreateTag).not.toBeCalled();
+      expect(mockSetFailed).not.toBeCalled();
+    });
+
+    it('does create tag for pull request from release branch with handle_pr_as_branch set', async () => {
+      /*
+       * Given
+       */
+      setInput('release_branches', 'source-branch');
+      setInput('handle_pr_as_branch', 'true');
+      const commits = [{ message: 'fix: this is my first fix', hash: null }];
+      jest
+        .spyOn(utils, 'getCommits')
+        .mockImplementation(async (sha) => commits);
+
+      const validTags = [
+        {
+          name: 'v1.2.3',
+          commit: { sha: '012345', url: '' },
+          zipball_url: '',
+          tarball_url: 'string',
+          node_id: 'string',
+        },
+      ];
+      jest
+        .spyOn(utils, 'getValidTags')
+        .mockImplementation(async () => validTags);
+
+      /*
+       * When
+       */
+      await action();
+
+      /*
+       * Then
+       */
+      expect(mockCreateTag).toHaveBeenCalledWith(
+        'v1.2.4',
+        expect.any(Boolean),
+        expect.any(String)
+      );
+      expect(mockSetFailed).not.toBeCalled();
+    });
+
+    it('does create tag for pull request from prerelease branch with handle_pr_as_branch set', async () => {
+      /*
+       * Given
+       */
+      setInput('pre_release_branches', 'source-branch');
+      setInput('handle_pr_as_branch', 'true');
+      const commits = [{ message: 'fix: this is my first fix', hash: null }];
+      jest
+        .spyOn(utils, 'getCommits')
+        .mockImplementation(async (sha) => commits);
+
+      const validTags = [
+        {
+          name: 'v1.2.3',
+          commit: { sha: '012345', url: '' },
+          zipball_url: '',
+          tarball_url: 'string',
+          node_id: 'string',
+        },
+      ];
+      jest
+        .spyOn(utils, 'getValidTags')
+        .mockImplementation(async () => validTags);
+
+      /*
+       * When
+       */
+      await action();
+
+      /*
+       * Then
+       */
+      expect(mockCreateTag).toHaveBeenCalledWith(
+        'v1.2.4-source-branch.0',
+        expect.any(Boolean),
+        expect.any(String)
+      );
       expect(mockSetFailed).not.toBeCalled();
     });
   });

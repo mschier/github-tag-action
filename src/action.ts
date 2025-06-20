@@ -30,6 +30,9 @@ export default async function main() {
   );
   const dryRun = core.getInput('dry_run');
   const customReleaseRules = core.getInput('custom_release_rules');
+  const shouldHandlePullRequestsAsBranches = /true/i.test(
+    core.getInput('handle_pr_as_branch')
+  );
   const shouldFetchAllTags = core.getInput('fetch_all_tags');
   const commitSha = core.getInput('commit_sha');
 
@@ -38,10 +41,16 @@ export default async function main() {
     mappedReleaseRules = mapCustomReleaseRules(customReleaseRules);
   }
 
-  const { GITHUB_REF, GITHUB_SHA } = process.env;
+  const { GITHUB_REF, GITHUB_SHA, GITHUB_HEAD_REF } = process.env;
 
   if (!GITHUB_REF) {
     core.setFailed('Missing GITHUB_REF.');
+    return;
+  }
+
+  const isPullRequest = isPr(GITHUB_REF);
+  if (isPullRequest && shouldHandlePullRequestsAsBranches && !GITHUB_HEAD_REF) {
+    core.setFailed('Missing GITHUB_HEAD_REF when handling PR as branch.');
     return;
   }
 
@@ -51,15 +60,20 @@ export default async function main() {
     return;
   }
 
-  const currentBranch = getBranchFromRef(GITHUB_REF);
+  const currentBranch =
+    shouldHandlePullRequestsAsBranches && isPullRequest
+      ? GITHUB_HEAD_REF!
+      : getBranchFromRef(GITHUB_REF);
   const isReleaseBranch = releaseBranches
     .split(',')
     .some((branch) => currentBranch.match(branch));
   const isPreReleaseBranch = preReleaseBranches
     .split(',')
     .some((branch) => currentBranch.match(branch));
-  const isPullRequest = isPr(GITHUB_REF);
-  const isPrerelease = !isReleaseBranch && !isPullRequest && isPreReleaseBranch;
+  const isPrerelease =
+    !isReleaseBranch &&
+    isPreReleaseBranch &&
+    (!isPullRequest || shouldHandlePullRequestsAsBranches);
 
   // Sanitize identifier according to
   // https://semver.org/#backusnaur-form-grammar-for-valid-semver-versions
